@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: mkite-kitchen
+    env: node
+    plan: free
+    buildCommand: |
+      # Install dependencies
+      npm install
+      # Build client
+      npx vite build
+      # Create the public directory
+      mkdir -p server/public
+      # Copy the client build to the server's static directory
+      cp -r client/dist/* server/public/
+      # Build custom production server
+      npx esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/production.js
+    startCommand: |
+      NODE_ENV=production node dist/production.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mkite-kitchen-db
+          property: connectionString
+
+databases:
+  - name: mkite-kitchen-db
+    plan: free
